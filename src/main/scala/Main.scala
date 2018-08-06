@@ -14,24 +14,17 @@ object Main extends App with HelperFunctions {
   else {
     val date = args(0)
     val file = args (1)
-    var logLines: ListBuffer[LogLine] = new ListBuffer[LogLine]()
 
     val sdf = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss.SSS")
     val matchDate = sdf.format(sdf.parse(date replace(" ", "T")))
 
-    for (line <- Source.fromFile(file).getLines.drop(1)) {
-      val pieces = line split ","
-      val formattedTimeStamp = sdf.format(sdf.parse(pieces(1)))
-      val logLine: LogLine = LogLine(ip = pieces(0), timeStamp = formattedTimeStamp, timeTaken = pieces(2))
-
-      logLines += logLine
-    }
+    val logLines = getLogLines(file)
 
     val occurrences = findOccurrences(matchDate, logLines)
 
     println("Occurrences of timestamp " + date + " : " + occurrences)
 
-    val timeStampWithHighestConnections = highestNumberConnections(matchDate, logLines)
+    val timeStampWithHighestConnections = highestNumberConnections(logLines)
 
     println("Timestamp with highest num connections: " + timeStampWithHighestConnections)
   }
@@ -41,7 +34,23 @@ object Main extends App with HelperFunctions {
 trait HelperFunctions {
   def usage = {
     println("Please provide two string arguments: a timestamp, and a file.")
-    println("Example: \"2017-10-23 12:00:00.000\" ~/Documents/sample.csv")
+    println("Example: \"2017-10-23 12:00:00.000\" /Users/rachel/Documents/sample.csv")
+  }
+
+  def getLogLines(file: String): ListBuffer[LogLine] = {
+
+    val sdf = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss.SSS")
+    var logLines: ListBuffer[LogLine] = new ListBuffer[LogLine]()
+
+    for (line <- Source.fromFile(file).getLines.drop(1)) {
+      val pieces = line split ","
+      val formattedTimeStamp = sdf.format(sdf.parse(pieces(1)))
+      val logLine: LogLine = LogLine(ip = pieces(0), timeStamp = formattedTimeStamp, timeTaken = pieces(2))
+
+      logLines += logLine
+    }
+
+    logLines
   }
 
   def findOccurrences(matchDate: String, logLines: ListBuffer[LogLine]) = {
@@ -52,7 +61,7 @@ trait HelperFunctions {
     occurrences
   }
 
-  def highestNumberConnections(matchDate: String, logLines: ListBuffer[LogLine]): String = {
+  def highestNumberConnections(logLines: ListBuffer[LogLine]): String = {
     logLines groupBy(_.timeStamp) maxBy(_._2.size) _1
   }
 }
